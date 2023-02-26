@@ -17,8 +17,8 @@ Elasticsearch学习2.4.13 7.9.3
   运行es,并将容器内的config文件复制到宿主机
 
   ```shell
-  docker run -d --name es9200 --privileged=true --net elastic -p 9200:9200 -p 9300:9300  -e "discovery.type=single-node" -v /Users/username/docker/elasticsearch/9200/config:/usr/share/elasticsearch/config/ -v /Users/username/docker/elasticsearch/9200/data/:/usr/share/elasticsearch/data/ -v /Users/username/docker/elasticsearch/9200/plugins/:/usr/share/elasticsearch/plugins/ -v /Users/username/docker/elasticsearch/9200/logs/:/usr/share/elasticsearch/logs/ elasticsearch:7.8.0
-  # docker挂载的主目录为：/Users/username/docker/elasticsearch/9200
+  docker run -d --name es9200 --privileged=true --net elastic -p 9200:9200 -p 9300:9300  -e "discovery.type=single-node" -v /Users/xiaoqiangli/docker/elasticsearch/9200/config:/usr/share/elasticsearch/config/ -v /Users/xiaoqiangli/docker/elasticsearch/9200/data/:/usr/share/elasticsearch/data/ -v /Users/xiaoqiangli/docker/elasticsearch/9200/plugins/:/usr/share/elasticsearch/plugins/ -v /Users/xiaoqiangli/docker/elasticsearch/9200/logs/:/usr/share/elasticsearch/logs/ elasticsearch:7.8.0
+  # docker挂载的主目录为：/Users/xiaoqiangli/docker/elasticsearch/9200
   # 在主目录下执行
   docker cp es9200:/usr/share/elasticsearch/config .
   # 创建data与plugins目录
@@ -434,6 +434,160 @@ Elasticsearch学习2.4.13 7.9.3
     }
     ```
 
-    
-    
-    
+
+- es集群安装
+
+  第一个节点
+
+  ```yaml
+  # 集群名称，集群统一
+  cluster.name: "docker-cluster"
+  # 节点名称，集群唯一
+  node.name: node-9200
+  # 是否有资格成为主节点
+  node.master: true
+  # 是否存储索引数据
+  node.data: true
+  # 节点ip
+  network.bind_host: 0.0.0.0
+  # 宿主机ip
+  network.publish_host: 192.168.3.8
+  # http 端口
+  http.port: 9200
+  # tcp 监听端口
+  transport.tcp.port: 9300
+  discovery.seed_hosts: ["192.168.3.8:9300","192.168.3.8:9301","192.168.3.8:9302"]
+  gateway.recover_after_nodes: 2
+  # 跨域配置
+  # action.destructive_requeires_name: true
+  http.cors.enabled: true
+  http.cors.allow-origin: "*"
+  # 初始化时，此节点为主节点
+  cluster.initial_master_nodes: ["node-9200"]
+  
+  # 以下是其他参数
+  # 设置默认索引分片个数
+  index.number_of_shards: 5
+  # 设置默认索引副本个数
+  index.number_of_replicas: 1
+  # 配置文件存储路径
+  path.conf: /path/to/conf
+  # 索引数据的存储路径
+  path.data: /path/to/data,/path/to/data1
+  # 临时文件存储路径
+  path.work: /path/to/work
+  # 日志文件存储路径
+  path.logs: /path/to/logs
+  # 插件存储路径
+  path.plugins: /path/to/plugins
+  # 锁住内存不尽兴swapping
+  bootstrap.mlockall: true
+  # 设置绑定的ip地址
+  network.bind_host: 127.0.0.1
+  # 设置其他节点和其他节点交互的ip地址，必须是真实的ip
+  network.publish_host: 127.0.0.1
+  # 同时设置bind_host和publish_host两个参数
+  network.host: 127.0.0.1
+  # 设置节点之间交互的tcp端口
+  transport.tcp.port: 9300
+  # 是否压缩tcp传输时的数据
+  transport.tcp.compress: false
+  # 设置对外服务的http端口
+  http.port: 9200
+  # 设置内容的最大容量
+  http.max_content_length: 100mb
+  # 是否使用http协议对外提供服务
+  http.enabled: true
+  # gateway的类型默认为local即为本地文件系统，可以设置为本地文件系统，分布式文件系统，hadoop的HDFS，和amazon的s3服务器等。
+  gateway.type: local
+  # 集群中n个节点启动时进行数据恢复
+  gateway.recover_after_nodes: 1
+  # 初始化数据恢复进程超时时间
+  gateway.recover_after_time: 5m
+  # 集群中节点的数量,这n个节点启动，立即进行数据恢复
+  gateway.expected_nodes: 2
+  # 初始化数据恢复时，并发恢复线程的个数
+  cluster.routing.allocation.node_initial_primaries_recoveries: 4
+  # 添加删除节点或负载均衡时，并发恢复线程的个数
+  cluster.routing.node_concurrent_recoveries: 4
+  # 数据恢复时限制的带宽
+  indices.recovery.max_size_per_sec: 0
+  # 限制从其它分片恢复数据时最大同时打开并发流的个数
+  indices.recovery.concurrent_streams: 5
+  # 保证集群中的节点可以知道其它n个有master资格的节点
+  discovery.zen.minimum_master_nodes: 1
+  # 集群中自动发现其它节点时ping连接超时时间
+  discovery.zen.ping.timeout: 3s
+  # 是否打开多播发现节点
+  discovery.zen.ping.multicast.enabled: true
+  # 集群中master节点的初始列表，可以通过这些节点来自动发现新加入集群的节点
+  discovery.zen.ping.unicast.hosts: ["host1", "host2:port", "host3[portX-portY]"]
+  ```
+
+  第二个节点
+
+  ```yaml
+  # 集群名称，集群统一
+  cluster.name: "docker-cluster"
+  # 节点名称，集群唯一
+  node.name: node-9201
+  # 主节点
+  node.master: true
+  node.data: true
+  # 节点ip
+  network.bind_host: 0.0.0.0
+  # 宿主机ip
+  network.publish_host: 192.168.3.8
+  # http 端口
+  http.port: 9200
+  # tcp 监听端口
+  transport.tcp.port: 9300
+  discovery.seed_hosts: ["192.168.3.8:9300","192.168.3.8:9301","192.168.3.8:9302"]
+  gateway.recover_after_nodes: 2
+  # 跨域配置
+  # action.destructive_requeires_name: true
+  http.cors.enabled: true
+  http.cors.allow-origin: "*"
+  # 初始化时，此节点为主节点
+  cluster.initial_master_nodes: ["node-9200"]
+  ```
+
+  第三个节点
+
+  ```yaml
+  # 集群名称，集群统一
+  cluster.name: "docker-cluster"
+  # 节点名称，集群唯一
+  node.name: node-9202
+  # 主节点
+  node.master: true
+  node.data: true
+  # 节点ip
+  network.bind_host: 0.0.0.0
+  # 宿主机ip
+  network.publish_host: 192.168.3.8
+  # http 端口
+  http.port: 9200
+  # tcp 监听端口
+  transport.tcp.port: 9300
+  discovery.seed_hosts: ["192.168.3.8:9300","192.168.3.8:9301","192.168.3.8:9302"]
+  gateway.recover_after_nodes: 2
+  # 跨域配置
+  # action.destructive_requeires_name: true
+  http.cors.enabled: true
+  http.cors.allow-origin: "*"
+  # 初始化时，此节点为主节点
+  cluster.initial_master_nodes: ["node-9200"]
+  ```
+
+  指定docker命令
+
+  ```shell
+  docker run -d --name node-9200 --privileged=true --net elastic -p 9200:9200 -p 9300:9300 -v /Users/xiaoqiangli/docker/elasticsearch/9200/config:/usr/share/elasticsearch/config/ -v /Users/xiaoqiangli/docker/elasticsearch/9200/data/:/usr/share/elasticsearch/data/ -v /Users/xiaoqiangli/docker/elasticsearch/9200/plugins/:/usr/share/elasticsearch/plugins/ -v /Users/xiaoqiangli/docker/elasticsearch/9200/logs/:/usr/share/elasticsearch/logs/ elasticsearch:7.8.0;
+  
+  docker run -d --name node-9201 --privileged=true --net elastic -p 9201:9201 -p 9301:9301 -v /Users/xiaoqiangli/docker/elasticsearch/9201/config:/usr/share/elasticsearch/config/ -v /Users/xiaoqiangli/docker/elasticsearch/9201/data/:/usr/share/elasticsearch/data/ -v /Users/xiaoqiangli/docker/elasticsearch/9201/plugins/:/usr/share/elasticsearch/plugins/ -v /Users/xiaoqiangli/docker/elasticsearch/9201/logs/:/usr/share/elasticsearch/logs/ elasticsearch:7.8.0;
+  
+  docker run -d --name node-9202 --privileged=true --net elastic -p 9202:9202 -p 9302:9302 -v /Users/xiaoqiangli/docker/elasticsearch/9202/config:/usr/share/elasticsearch/config/ -v /Users/xiaoqiangli/docker/elasticsearch/9202/data/:/usr/share/elasticsearch/data/ -v /Users/xiaoqiangli/docker/elasticsearch/9202/plugins/:/usr/share/elasticsearch/plugins/ -v /Users/xiaoqiangli/docker/elasticsearch/9202/logs/:/usr/share/elasticsearch/logs/ elasticsearch:7.8.0;
+  ```
+
+- 集群操作
