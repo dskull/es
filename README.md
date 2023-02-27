@@ -591,3 +591,48 @@ Elasticsearch学习2.4.13 7.9.3
   ```
 
 - 集群操作
+
+​		创建一个索引，分配三个分片和一份副本。每个主分片拥有一个副本分片
+
+​		put http://localhost:9200/users
+
+​		
+
+```json
+{
+  "settings" :{
+    "number_of_shards": 3,
+    "number_of_replicas": 1
+  }
+}
+```
+
+​		分片决定索引能够存储的最大数据量
+
+- 测试分词器
+
+​		get http://localhost:9200/_analyze
+
+```json
+{
+  "analyzer": "standard", // ik_max_word 需要加载插件
+  "text": "Text to analyze"
+}
+```
+
+​		自定义分词字典plugins目录下，ik文件夹，config目录创建custom.dic，写入具体的值。
+
+```xml
+<entry key="ext_dict">custom.dic</entry>
+```
+
+​		同时配置IKAnalyzer.cfg.xml配置custom.dic，重启es。
+
+- 文档展示kibana安装
+
+  ```shell
+  docker run -d --name kibana --privileged=true --net elastic -p 5601:5601 -v /Users/xiaoqiangli/docker/kibana/config:/usr/share/kibana/config/ -v /Users/xiaoqiangli/docker/kibana/data/:/usr/share/kibana/data/ -v /Users/xiaoqiangli/docker/kibana/plugins/:/usr/share/kibana/plugins/ kibana:7.13.3
+  ```
+
+  
+
